@@ -1,0 +1,4 @@
+[27.1, 30.0, 17.7, 25.2, -1.0] # Percent of: A,C,T,G, # of user defined motifs (<=0 for no motifs) 
+2648 #Number of nucleotides 
+2 #Number of sequences: 
+User specified motifs, each one on its own line:
