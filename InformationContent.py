@@ -4,15 +4,12 @@ import operator
 import sys
 import re
 
-from Bio import SeqIO
-
-import math
 import math
 
 __author__ = 'Kadhir'
 
 
-def reading(readfile, sequenceFiles):  # outputs a parsed Stockholm file that has the [identifier, sequence]
+def reading(readfile, sequenceFiles):  # outputs a parsed Stockholm file in a list with the [identifier, sequence]
     for line in readfile:
         if line.startswith("//"):
             break
@@ -115,7 +112,7 @@ def main():
         sequenceFiles = reading(readfile, sequenceFiles)  # outputs a list with [identifier, sequence]+
         colDictionary = counter(sequenceFiles)  # outputs a dictionary with each column identifier, entropy value
         sorter(colDictionary, 10)  # prints the lowest 10 entropy values
-        colDictionary = counter2(sequenceFiles)  # outputs a dictionary with each column pair identifier and entropy val
+        colDictionary = counter2(sequenceFiles)  # outputs a dictionary with each column pair identifier and entropy
         sorter2(colDictionary, 50)  # prints the highest 50 entropy values
     except IOError:  # If there's an invalid input file
         print("Error: Can't find " + sys.argv[1])
