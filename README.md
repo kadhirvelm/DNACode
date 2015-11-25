@@ -12,3 +12,9 @@ The InformationContent file does the following:
 
 Run it with a Stockholm formatted file as its input and it'll spit out the top ten 
 lowest Shannon entropy columns, and the top fifty mutual information columns.
+
+The Pairwise Alignment file does the following:
+
+Run it with a similarity matrix as the first argument and a sequence file as the second
+to get the first two sequences inside the sequence file aligned and printed to the 
+terminal.
