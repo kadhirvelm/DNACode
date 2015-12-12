@@ -18,3 +18,8 @@ The Pairwise Alignment file does the following:
 Run it with a similarity matrix as the first argument and a sequence file as the second
 to get the first two sequences inside the sequence file aligned and printed to the 
 terminal.
+
+Crispi.py file does the following:
+
+Run it with any fasta file and it'll create an output.txt with the best CRISPR/Cas9 NGG sites
+present in the file.'
