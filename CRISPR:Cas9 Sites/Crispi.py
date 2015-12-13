@@ -1,17 +1,25 @@
 from __future__ import division
 import sys
-import re
 import random
+import regex
 
 from Bio import SeqIO
 
 
 def main():
     size = 21
+    print("Loading fasta file...")
     mySeq = loadFasta()  # load the fasta file
+    print("Fasta file loaded.")
+    print("Locating and parsing NGG sites...")
     myDict, indices = parseFasta(mySeq, size)  # parse the fasta file for .{21}GG (regex)
+    print("NGG Sites found.")
+    print("Calculating off-targets...")
     myDict = callOnParsers(myDict, mySeq)
+    print("Calculated off-targets.")
+    print("Writing output file...")
     writeFile(myDict, indices)
+    print("Finished. Check output.txt")
 
 
 def loadFasta():
@@ -24,6 +32,9 @@ def loadFasta():
     except IndexError:
         print("You must specify a fasta filename to run.")
         sys.exit()
+    except FileNotFoundError:
+        print("Can't find "+sys.argv[1])
+        sys.exit()
     return str(fullSeq)
 
 
@@ -33,11 +44,11 @@ def parseFasta(mySeq, size):
     newMatchDict = {}
     currIndex = []
     pattern = ".{" + str(size) + "}GG"
-    m = re.findall(pattern, mySeq)
-    for kmer in re.finditer(pattern, mySeq):
+    m = regex.findall(pattern, mySeq)
+    for kmer in regex.finditer(pattern, mySeq):
         matchDict[kmer.group(0)] = 0
         indices[kmer.group(0)] = str(kmer.start()) + " " + str(kmer.end())
-    for x in range(0, 100):
+    for x in range(0, 50):
         index = random.randint(x, len(m) - 1)
         if index in currIndex:
             index = x
@@ -49,8 +60,11 @@ def parseFasta(mySeq, size):
 
 
 def parseOffTarget(mySeq, myDict,kmer):
-    total = (len(re.findall(kmer, mySeq))-1)*10  # arbitrary
-    myDict[kmer] += total
+    total = (len(regex.findall(kmer, mySeq))-1)*10  # arbitrary
+    if total > 10:
+        del myDict[kmer]
+    else:
+        myDict[kmer] += total
     return myDict
 
 
@@ -58,8 +72,11 @@ def parseOffTarget1(mySeq, myDict, start, end, temp, kmer, numOffTargets):
     total = 0
     for bp in range(start, end):
         temp1 = temp + helperResEnd(start, bp, kmer)
-        total += len(re.findall(temp1, mySeq))/numOffTargets
-    myDict[kmer] += total
+        total += len(regex.findall(temp1, mySeq))/numOffTargets
+    if total > 2:
+        del myDict[kmer]
+    else:
+        myDict[kmer] += total
     return myDict
 
 
@@ -107,36 +124,37 @@ def parseOffTarget7(mySeq, myDict, start, end, kmer,numOffTargets):
 
 def callOnParsers(myDict, mySeq):
     counter = 0
-    print("Status:")
-    for kmer in myDict:
-        totalOff = 5
-        totalOffStandard = 5
-        while totalOff > -1:
+    print("Status: ")
+    myDictCopy = myDict.copy()
+    print("Number of Cas9 Sites:" + str(len(myDict)))
+    for kmer in myDictCopy:
+        totalOff = 0
+        totalOffStandard = 3
+        while totalOff < totalOffStandard+1:
             if totalOff == 7:
-                parseOffTarget7(mySeq, myDict, 0, len(kmer) - 2, kmer, totalOff)
+                myDict = parseOffTarget7(mySeq, myDict, 0, len(kmer) - 2, kmer, totalOff)
             elif totalOff == 6:
-                parseOffTarget6(mySeq, myDict, 0, len(kmer) - 2, "", kmer, totalOff)
+                myDict = parseOffTarget6(mySeq, myDict, 0, len(kmer) - 2, "", kmer, totalOff)
             elif totalOff == 5:
-                parseOffTarget5(mySeq, myDict, 0, len(kmer) - 2, "", kmer, totalOff)
+                myDict = parseOffTarget5(mySeq, myDict, 0, len(kmer) - 2, "", kmer, totalOff)
             elif totalOff == 4:
-                parseOffTarget4(mySeq, myDict, 0, len(kmer) - 2, "", kmer, totalOff)
+                myDict = parseOffTarget4(mySeq, myDict, 0, len(kmer) - 2, "", kmer, totalOff)
             elif totalOff == 3:
-                parseOffTarget3(mySeq, myDict, 0, len(kmer) - 2, "", kmer, totalOff)
+                myDict = parseOffTarget3(mySeq, myDict, 0, len(kmer) - 2, "", kmer, totalOff)
             elif totalOff == 2:
                 myDict = parseOffTarget2(mySeq, myDict, 0, len(kmer) - 2, "", kmer, totalOff)
             elif totalOff == 1:
                 myDict = parseOffTarget1(mySeq, myDict, 0, len(kmer) - 2, "", kmer, totalOff)
             elif totalOff == 0:
                 myDict = parseOffTarget(mySeq, myDict, kmer)
-            totalOff -= 1
-            percent = (1/(len(myDict)+1))*(totalOffStandard-totalOff)/totalOffStandard
-            percent = ((counter/len(myDict)) + percent)*100
+            totalOff += 1
+            percent = (1/(len(myDictCopy)+1))*(totalOff)/totalOffStandard
+            percent = ((counter/len(myDictCopy)) + percent)*100
             percent = round(percent, 2)
-            print(str(percent)+"%")
+            print(str(percent)+"% ")
+            if kmer not in myDict:
+                break
         counter += 1
-        percent = (counter/len(myDict))*100
-        percent = round(percent, 2)
-        print(str(percent)+"%")
     return myDict
 
 
