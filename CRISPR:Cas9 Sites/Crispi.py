@@ -22,7 +22,7 @@ def main():
     print("Calculated off-targets.")
     print("Writing output file...")
     writeFile(myDict, indices, name, mySeq, str(maxMismatches), str(selectionSize), str(numberOutputted), cas9Site)
-    print("Finished. Check output.txt")
+    print("Finished. Check "+name+".txt")
 
 
 # Will open and save the fasta file along with the name
