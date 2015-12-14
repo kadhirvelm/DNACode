@@ -12,6 +12,7 @@ def main():
     print("Loading fasta file...")
     mySeq, name = loadFasta()  # load the fasta file
     print("Fasta file loaded.")
+    print("Total sequence length: " + str(len(mySeq)))
     maxMismatches, selectionSize, numberOutputted, cas9Site = loadParameters()
     print("Locating and parsing NGG sites...")
     myDict, indices = parseFasta(mySeq, size, cas9Site, selectionSize)  # parse the fasta file for .{21}GG (regex)
@@ -239,7 +240,7 @@ def writeFile(myDict, indicies, name, mySeq, maxMismatches, selectionSize, numbe
     sortDict = sorted(myDict, key = myDict.get)
     fileTemp = open(name + ".txt", 'w+')
     fileTemp.write("Crispi -- Version 66.0123 Beta \n")
-    fileTemp.write("Note: \n-->Indicies are exclusive. "
+    fileTemp.write("Note: \n-->Indices are exclusive. "
                    + "\n-->The lower the score, the better the site, aka the less off-target probability\n\n")
     fileTemp.write("-- Parameters --\n")
     fileTemp.write("Total Sequence Length: " + str(len(mySeq)) + "\n")
@@ -249,9 +250,9 @@ def writeFile(myDict, indicies, name, mySeq, maxMismatches, selectionSize, numbe
     for kmer in sortDict:
         counter += 1
         fileTemp.write(str(kmer) + " ( " + indicies[kmer] + " )" + " Score: " + str(myDict[kmer]) + "\n")
-        if counter == numberOutputted:
+        if counter == int(numberOutputted):
             break
-    if counter < numberOutputted:
+    if counter < int(numberOutputted):
         print("Not enough cas9 sites, outputted: " + str(counter))
 
 
