@@ -198,17 +198,17 @@ def callOnParsers(myDict, mySeq, maxMismatches):
 # Given a start, an end, and a particular kmer in question, will return a regex expression looking for
 # the site, and replacing the last bp with a mismatch
 def helperRes(start, bp, kmer):
-    if type(kmer) == str:
+    try:
         return kmer[start:bp] + regExDefiner(kmer[bp])
-    else:
+    except TypeError:
         return "XX"
 
 
 # The end of the regular expression specified by helperRes
 def helperResEnd(start, bp, kmer):
-    if type(kmer) == str:
+    try:
         return helperRes(start, bp, kmer) + kmer[bp + 1:]
-    else:
+    except TypeError:
         return "XX"
 
 

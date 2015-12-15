@@ -245,6 +245,7 @@ def writeFile(myDict, indicies, name, mySeq, maxMismatches, selectionSize, numbe
                    + "\n-->The lower the score, the better the site, aka the less off-target probability\n\n")
     fileTemp.write("-- Parameters --\n")
     fileTemp.write("Total Sequence Length: " + str(len(mySeq)) + "\n")
+    fileTemp.write("Total Target Sequence Length: N/A \n")
     fileTemp.write("Max Mismatches: " + maxMismatches + ", Selection Size: "
                    + selectionSize + ", Cas9 Site: " + cas9Site + + ", Total "
                    + cas9Site + " Sites: " + totalCas9 + "\n\n")
