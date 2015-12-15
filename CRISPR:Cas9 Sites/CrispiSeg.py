@@ -92,10 +92,7 @@ def parseFasta(segmentSeq, size, cas9Site):
 # Then it returns the dictionary
 def parseOffTarget(mySeq, myDict, kmer):
     total = (len(regex.findall(kmer, mySeq)) - 1) * 2  # arbitrary
-    if total > 10:
-        del myDict[kmer]
-    elif kmer in myDict:
-        myDict[kmer] += total
+    myDict[kmer] += total
     return myDict
 
 
@@ -105,10 +102,7 @@ def parseOffTarget1(mySeq, myDict, start, end, temp, kmer, numOffTargets):
     for bp in range(start, end):
         temp1 = temp + helperResEnd(start, bp, kmer)
         total += len(regex.findall(temp1, mySeq)) / numOffTargets
-    if total > 2:
-        del myDict[kmer]
-    elif kmer in myDict:
-        myDict[kmer] += total
+    myDict[kmer] += total
     return myDict
 
 
@@ -204,12 +198,18 @@ def callOnParsers(myDict, mySeq, maxMismatches):
 # Given a start, an end, and a particular kmer in question, will return a regex expression looking for
 # the site, and replacing the last bp with a mismatch
 def helperRes(start, bp, kmer):
-    return kmer[start:bp] + regExDefiner(kmer[bp])
+    if type(kmer) == str:
+        return kmer[start:bp] + regExDefiner(kmer[bp])
+    else:
+        return "XX"
 
 
 # The end of the regular expression specified by helperRes
 def helperResEnd(start, bp, kmer):
-    return helperRes(start, bp, kmer) + kmer[bp + 1:]
+    if type(kmer) == str:
+        return helperRes(start, bp, kmer) + kmer[bp + 1:]
+    else:
+        return "XX"
 
 
 # Given a base pair, will return a regular expression for a mismatch
