@@ -10,18 +10,18 @@ from Bio import SeqIO
 def main():
     size = 21
     print("Loading fasta file...")
-    mySeq, name = loadFasta()  # load the fasta file
+    mySeq, segmentSeq, name = loadFasta()  # load the fasta file
     print("Fasta file loaded.")
     print("Total sequence length: " + str(len(mySeq)))
-    maxMismatches, selectionSize, numberOutputted, cas9Site = loadParameters()
+    maxMismatches, numberOutputted, cas9Site = loadParameters()
     print("Locating and parsing NGG sites...")
-    myDict, indices, totalCas9 = parseFasta(mySeq, size, cas9Site, selectionSize)  # parse the fasta file for .{21}GG
+    myDict, indices, totalCas9 = parseFasta(segmentSeq, size, cas9Site)  # parse the fasta file for .{21}GG
     print("NGG Sites found.")
     print("Calculating off-targets...")
     myDict = callOnParsers(myDict, mySeq, maxMismatches)
     print("Calculated off-targets.")
     print("Writing output file...")
-    writeFile(myDict, indices, name, mySeq, str(maxMismatches), str(selectionSize), str(numberOutputted), cas9Site,
+    writeFile(myDict, indices, name, mySeq, segmentSeq, str(maxMismatches), str(numberOutputted), cas9Site,
               totalCas9)
     print("Finished. Check " + name + ".txt")
 
@@ -31,48 +31,49 @@ def loadFasta():
     # Opening the input file, with exception handling.
     try:
         fullSeq = ""
+        segSeq = ""
         inFile = open(sys.argv[1])
-        name = sys.argv[2]
+        inFile2 = open(sys.argv[2])
+        name = sys.argv[3]
         for seq in SeqIO.parse(inFile, "fasta"):
             fullSeq += seq.seq
+        for seq in SeqIO.parse(inFile2, "fasta"):
+            segSeq += seq.seq
     except IndexError:
-        print("Usage: python3 Crispi.py Input.fasta OutputName MaxMismatches SelectionSize NumberOutputted [NGG/NAG]")
+        print("Usage: python3 CrispiSeg.py ReferenceGenome.fasta Segment.fasta" +
+              " OutputName MaxMismatches NumberOutputted [NGG/NAG]")
         sys.exit()
-    except FileNotFoundError:
-        print("Can't find " + sys.argv[1])
-        sys.exit()
-    return str(fullSeq), name
+    # except FileNotFoundError:
+    #     print("Can't find " + sys.argv[1])
+    #     sys.exit()
+    return str(fullSeq), str(segSeq), name
 
 
 # Loads the parameters from terminal for the max mismatches, the selection size,
 # the number outputted and the Cas9 sites
 def loadParameters():
     try:
-        maxMismatches = sys.argv[3]
+        maxMismatches = sys.argv[4]
         if maxMismatches == '-':
             maxMismatches = 3
-        selectionSize = sys.argv[4]
-        if selectionSize == '-':
-            selectionSize = 50
         numberOutputted = sys.argv[5]
         if numberOutputted == '-':
-            numberOutputted = 10
+            numberOutputted = 100
         cas9Site = sys.argv[6]
         if cas9Site == '-':
             cas9Site = 'NGG'
     except IndexError:
-        print("Usage: python3 Crispi.py Input.fasta OutputName MaxMismatches SelectionSize NumberOutputted [NGG/NAG]")
+        print("Usage: python3 CrispiSeg.py ReferenceGenome.fasta Segment.fasta" +
+              " OutputName MaxMismatches NumberOutputted [NGG/NAG]")
         sys.exit()
-    return int(maxMismatches), int(selectionSize), int(numberOutputted), cas9Site
+    return int(maxMismatches), int(numberOutputted), cas9Site
 
 
 # Given the sequence and total size, this will parse through the given file, returning 50 random
 # Cas9 NGG sites, along with their indices
-def parseFasta(mySeq, size, cas9Site, selectionSize):
+def parseFasta(segmentSeq, size, cas9Site):
     indices = {}
     matchDict = {}
-    newMatchDict = {}
-    currIndex = []
     if cas9Site == 'NGG':
         pattern = ".{" + str(size) + "}GG"
     elif cas9Site == 'NAG':
@@ -80,22 +81,10 @@ def parseFasta(mySeq, size, cas9Site, selectionSize):
     else:
         print("Neither NGG or NAG selected")
         sys.exit()
-    m = regex.findall(pattern, mySeq)
-    for kmer in regex.finditer(pattern, mySeq):
+    for kmer in regex.finditer(pattern, segmentSeq):
         matchDict[kmer.group(0)] = 0
         indices[kmer.group(0)] = str(kmer.start()) + " " + str(kmer.end())
-    if selectionSize > len(matchDict):
-        print("Selection size is greater than the total number of cas9 sites available.")
-        sys.exit()
-    for x in range(0, selectionSize):
-        index = random.randint(x, len(m) - 1)
-        if index in currIndex:
-            index = x
-            currIndex.append(x)
-        else:
-            currIndex.append(index)
-        newMatchDict[m[index]] = 0
-    return newMatchDict, indices, str(len(matchDict))
+    return matchDict, indices, str(len(matchDict))
 
 
 # Given the sequence, dictionary with NGG sites, and a particular NGG site, will check for exact matches
@@ -236,7 +225,7 @@ def regExDefiner(char):
 
 
 # Writes the output file, given the dictionary, the indices, the name of the file and the sequence
-def writeFile(myDict, indicies, name, mySeq, maxMismatches, selectionSize, numberOutputted, cas9Site, totalCas9):
+def writeFile(myDict, indicies, name, mySeq, segSeq, maxMismatches, numberOutputted, cas9Site, totalCas9):
     counter = 0
     sortDict = sorted(myDict, key = myDict.get)
     fileTemp = open(name + ".txt", 'w+')
@@ -244,10 +233,10 @@ def writeFile(myDict, indicies, name, mySeq, maxMismatches, selectionSize, numbe
     fileTemp.write("Note: \n-->Indices are exclusive. "
                    + "\n-->The lower the score, the better the site, aka the less off-target probability\n\n")
     fileTemp.write("-- Parameters --\n")
-    fileTemp.write("Total Sequence Length: " + str(len(mySeq)) + "\n")
-    fileTemp.write("Max Mismatches: " + maxMismatches + ", Selection Size: "
-                   + selectionSize + ", Cas9 Site: " + cas9Site + + ", Total "
-                   + cas9Site + " Sites: " + totalCas9 + "\n\n")
+    fileTemp.write("Total Genome Length: " + str(len(mySeq)) + "\n")
+    fileTemp.write("Total Target Sequence Length: " + str(len(segSeq)) + "\n")
+    fileTemp.write("Max Mismatches: " + maxMismatches + ", Cas9 Site: " + cas9Site + ", Total " +
+                   cas9Site + " Sites: " + totalCas9 + "\n\n")
     fileTemp.write("Sequence (start, end) Score: --\n")
     for kmer in sortDict:
         counter += 1
